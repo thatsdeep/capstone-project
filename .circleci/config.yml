@@ -161,6 +161,39 @@ jobs:
               command: |
                 kubectl get pods
                 kubectl get services
+# ----------------------------------------------------------------------------------------------------------------------------------  
+#  To create  LoadBalancer URL for the application as aws-eks orb is not creating LoadBalancer by default
+# ----------------------------------------------------------------------------------------------------------------------------------  
+
+    set-loadbalancer:
+        executor: aws-eks/python3
+        parameters:
+          cluster-name:
+            description: |
+              Name of the EKS cluster
+            type: string
+          aws-region:
+            description: |
+              AWS region
+            type: string
+            default: ""
+          expected-version-info:
+            description: |
+              Expected app version 
+            type: string
+        steps:
+          - checkout
+          - aws-eks/update-kubeconfig-with-authenticator:
+              cluster-name: << parameters.cluster-name >>
+              install-kubectl: true
+              aws-region: << parameters.aws-region >>
+          - kubernetes/create-or-update-resource:            
+              resource-file-path: "deployments/loadbalancer.yml"
+              resource-name: deployment/capstone              
+          - run:
+              name: Wait for LB to be ready
+              command: |         
+                kubectl get service/capstone-service-loadbalancer     
 # ------------------------------------------------------------------------------------------------------------------------------------
 #   Rollback the deployment of the application and run only when needed
 # ------------------------------------------------------------------------------------------------------------------------------------
@@ -265,7 +298,7 @@ workflows:
           cluster-name: eks-orb-capstone-project-deployment-${CIRCLE_WORKFLOW_ID:0:7}
           aws-region: $AWS_DEFAULT_REGION
           docker-image-name: "${AWS_ECR_URL}/eks_orb_capstone_project:latest"
-          version-info: "${CIRCLE_SHA1}"
+          version-info: latest
           requires:
             - setup-cluster
       
@@ -275,6 +308,13 @@ workflows:
           expected-version-info: latest
           requires:
             - deploy-application
+                       
+      - set-loadbalancer:
+          cluster-name: eks-orb-capstone-project-deployment-${CIRCLE_WORKFLOW_ID:0:7}
+          aws-region: $AWS_DEFAULT_REGION
+          expected-version-info: latest  
+          requires:
+            - test-application
                         
       - undeploy-application:
           cluster-name: eks-orb-capstone-project-deployment-${CIRCLE_WORKFLOW_ID:0:7}
