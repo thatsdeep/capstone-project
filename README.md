@@ -1,5 +1,7 @@
 [![CircleCI](https://circleci.com/gh/thatsdeep/capstone-project.svg?style=svg)](https://circleci.com/gh/thatsdeep/capstone-project/)
-capstone-project
+
+## capstone-project
+
 Its a Udacity DevOps Capstone project to deploy an app in AWS EKS
 
 Below are the steps performed
