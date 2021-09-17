@@ -45,7 +45,7 @@ jobs:
             command: |
               export TAG=latest
               export IMAGE_NAME=capstone
-              docker build -t thatsdeep/$IMAGE_NAME:$TAG .
+              docker build -t 617156/$IMAGE_NAME:$TAG .
               
 #  -------------------------------------------------------------------------------------------------------------------------------------------
 #  Push the Dockerimage into DockerHub
@@ -63,7 +63,7 @@ jobs:
             command: |
               export TAG=latest
               export IMAGE_NAME=capstone
-              docker build -t thatsdeep/$IMAGE_NAME:$TAG .
+              docker build -t 617156/$IMAGE_NAME:$TAG .
               docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD 
               docker push reshak/$IMAGE_NAME:$TAG
               
