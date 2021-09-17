@@ -1,0 +1,99 @@
+version: 2.1
+
+orbs:
+  aws-eks: circleci/aws-eks@1.1.0
+  aws-ecr: circleci/aws-ecr@7.2.0
+  kubernetes: circleci/kubernetes@0.4.0
+  
+
+jobs:
+
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+#  To lint the Dockerfile
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+
+    run-lint:
+      docker:
+        - image: circleci/node:13.8.0
+      steps:
+        - checkout
+        - run:
+            name: install dependencies
+            command: |
+              sudo wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64
+              sudo chmod +x /bin/hadolint
+        - run:
+            name: Run Lint
+            command: |
+              hadolint Dockerfile
+              
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+#  Build the Dockerimage for the application 
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+
+    build-docker-image:
+      docker:
+        - image: circleci/node:13.8.0
+      steps:
+        - checkout
+
+        - setup_remote_docker:
+            version: 19.03.13
+
+        - run:
+            name: Build Docker Image
+            command: |
+              export TAG=latest
+              export IMAGE_NAME=capstone
+              docker build -t reshak/$IMAGE_NAME:$TAG .
+              
+#  -------------------------------------------------------------------------------------------------------------------------------------------
+#  Push the Dockerimage into DockerHub
+#  ------------------------------------------------------------------------------------------------------------------------------------------
+
+    push-docker-image:
+      docker:
+        - image: circleci/node:13.8.0
+      steps:
+        - checkout
+        - setup_remote_docker:
+            version: 19.03.13
+        - run:
+            name: Push Docker Image to Docker Hub
+            command: |
+              export TAG=latest
+              export IMAGE_NAME=capstone
+              docker build -t reshak/$IMAGE_NAME:$TAG .
+              docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD 
+              docker push reshak/$IMAGE_NAME:$TAG
+              
+# ----------------------------------------------------------------------------------------------------------------------------------------
+# Start of Workflow
+# ----------------------------------------------------------------------------------------------------------------------------------------
+     
+workflows:
+  default:
+    jobs:
+      - run-lint
+      
+      - build-docker-image:
+          requires:
+            - "run-lint"
+      
+      - push-docker-image:
+          requires:
+            - "build-docker-image"
+            
+      - aws-ecr/build-and-push-image:
+   
+          name: build-and-push-image-ecr
+          account-url: AWS_ECR_URL
+          region: AWS_DEFAULT_REGION
+          create-repo: true
+          repo: eks_orb_capstone_project
+          dockerfile: Dockerfile
+          path: ~/project/
+ #         tag: ${CIRCLE_SHA1}
+          tag: latest
+          requires:
+            - push-docker-image
