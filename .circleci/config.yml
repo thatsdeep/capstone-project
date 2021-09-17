@@ -65,7 +65,7 @@ jobs:
               export IMAGE_NAME=capstone
               docker build -t 617156/$IMAGE_NAME:$TAG .
               docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD 
-              docker push reshak/$IMAGE_NAME:$TAG
+              docker push 617156/$IMAGE_NAME:$TAG
               # ----------------------------------------------------------------------------------------------------------------------------------------
 # Setup cluster to fix the orb error while unzipping the eksctl package  
 # ----------------------------------------------------------------------------------------------------------------------------------------  
@@ -243,7 +243,7 @@ workflows:
       - push-docker-image:
           requires:
             - "build-docker-image"
-           - aws-ecr/build-and-push-image:
+      - aws-ecr/build-and-push-image:
    
           name: build-and-push-image-ecr
           account-url: AWS_ECR_URL
